@@ -195,8 +195,8 @@ ggplot(data2, aes(x = jitter(PTA.better), y = SRT, color = MoCA.cat)) +
   geom_segment(aes(x = 0, y = -11.5103, xend = 20, yend = -10.7633), color = "orangered3", size = 0.6) + 
   geom_segment(aes(x = 20, y = -10.5638, xend = 40, yend = -8.4318), color = "dodgerblue3", size = 0.6) + 
   geom_segment(aes(x = 20, y = -11.55917, xend = 40, yend = -7.45417), color = "orangered3", size = 0.6) + 
-  geom_segment(aes(x = 40, y = -7.4127, xend = 64, yend = -0.3399), color = "dodgerblue3", size = 0.6, lty="dashed") + 
-  geom_segment(aes(x = 40, y = -4.4721, xend = 64, yend = -2.1489), color = "orangered3", size = 0.6, lty="dashed")
+  geom_segment(aes(x = 40, y = -7.4127, xend = 64, yend = -0.3399), color = "dodgerblue3", size = 0.6) + 
+  geom_segment(aes(x = 40, y = -4.4721, xend = 64, yend = -2.1489), color = "orangered3", size = 0.6)
 
 ```
   
@@ -255,8 +255,8 @@ ggplot(data2, aes(x = jitter(PTA.better), y = SRT, color = Cog.cat)) +
   geom_segment(aes(x = 0, y = -11.5103, xend = 20, yend = -10.7633), color = "orangered3", size = 0.6) + 
   geom_segment(aes(x = 20, y = -10.5638, xend = 40, yend = -8.4318), color = "dodgerblue3", size = 0.6) + 
   geom_segment(aes(x = 20, y = -11.55917, xend = 40, yend = -7.45417), color = "orangered3", size = 0.6) + 
-  geom_segment(aes(x = 40, y = -7.4127, xend = 64, yend = -0.3399), color = "dodgerblue3", size = 0.6, lty="dashed") + 
-  geom_segment(aes(x = 40, y = -4.4721, xend = 64, yend = -2.1489), color = "orangered3", size = 0.6, lty="dashed")
+  geom_segment(aes(x = 40, y = -7.4127, xend = 64, yend = -0.3399), color = "dodgerblue3", size = 0.6) + 
+  geom_segment(aes(x = 40, y = -4.4721, xend = 64, yend = -2.1489), color = "orangered3", size = 0.6)
 
 ```
   
