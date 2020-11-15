@@ -92,18 +92,8 @@ m.normal <- lm(SRT ~ PTA.better, subset(data2, PTA.group == "Normal"))
 m.mild <- lm(SRT ~ PTA.better, subset(data2, PTA.group == "Mild"))
 m.moderate <- lm(SRT ~ PTA.better, subset(data2, PTA.group == "Moderate"))
 
-# Manual calculation of regression line coordinates (3 PTA Groups)
-summary(m.normal)
-0.03318 * 0 - 11.53753 # 0, -11.53753
-0.03318 * 20 - 11.53753 # 20, -10.87393
-summary(m.mild)
-0.16179 * 20 - 14.28681 # 20, -11.05101
-0.16179 * 40 - 14.28681 # 40, -7.81521
-summary(m.moderate)
-0.25282 * 40 - 16.59692 # 40, -6.48412
-0.25282 * 64 - 16.59692 # 64, -0.41644
-
 # Plot SRT ~ PTA, MoCA colour-coded (gradient)
+# Cordinates for geom_segments were manually calculated from slopes and intercepts in above models
 ggplot(data2, aes(x = jitter(PTA.better), y = SRT, color = MoCA.total)) +
   geom_point(size = 3) + 
   scale_colour_gradient2(low = "red", mid = "white", high = "blue", midpoint = 25, name = "MoCA total") +
@@ -156,28 +146,9 @@ mild.moca26 <- lm(SRT ~ PTA.better, subset(data2, PTA.group == "Mild" & MoCA.cat
 mild.moca25 <- lm(SRT ~ PTA.better, subset(data2, PTA.group == "Mild" & MoCA.cat == "<26"))
 moderate.moca26 <- lm(SRT ~ PTA.better, subset(data2, PTA.group == "Moderate" & MoCA.cat == "≥26"))
 moderate.moca25 <- lm(SRT ~ PTA.better, subset(data2, PTA.group == "Moderate" & MoCA.cat == "<26"))
-
-# Manual calculation of regression line coordinates (3 PTA Groups x 2 MoCA Categories)
-summary(nh.moca26) # x = 0, y = -11.5635, xend = 20, yend = -10.9709
-0.02963 * 0 - 11.56350
-0.02963 * 20 - 11.56350
-summary(nh.moca25) # x = 0, y = -11.5103, xend = 20, yend = -10.7633
-0.03735 * 0 - 11.51030
-0.03735 * 20 -  11.51030
-summary(mild.moca26) # x = 20, y = -10.5638, xend = 40, yend = -8.4318
-0.10660 * 20 - 12.69580
-0.10660 * 40 - 12.69580
-summary(mild.moca25) # x = 20, y = -11.55917, xend = 40, yend = -7.45417
-0.20525 * 20 - 15.66417
-0.20525 * 40 - 15.66417
-summary(moderate.moca26) # x = 40, y = -7.4127, xend = 64, yend = -0.3399
-0.2947 * 40 - 19.2007
-0.2947 * 64 - 19.2007 
-summary(moderate.moca25) # x = 40, y = -4.4721, xend = 64, yend = -2.1489
-0.0968 * 40 - 8.3441
-0.0968 * 64 - 8.3441
   
 # Plot SRT ~ PTA, MoCA colour-coded & two regression lines per PTA Group
+# Coordinates for geom_segment lines were manually calculated from slope and intercepts in above models
 ggplot(data2, aes(x = jitter(PTA.better), y = SRT, color = MoCA.cat)) +
   geom_point(size = 3) + 
   scale_colour_manual(labels = c("26+", "<26"), name="MoCA Category", values=c("dodgerblue1", "orangered1")) +
@@ -217,27 +188,8 @@ mild.mci <- lm(SRT ~ PTA.better, subset(data2, PTA.group == "Mild" & Cog.cat == 
 moderate.normal <- lm(SRT ~ PTA.better, subset(data2, PTA.group == "Moderate" & Cog.cat == "Normal"))
 moderate.mci <- lm(SRT ~ PTA.better, subset(data2, PTA.group == "Moderate" & Cog.cat == "MCI"))
 
-# Manual calculation of regression line coordinates (3 PTA Groups x 2 Cog Categories)
-summary(nh.normal)
-0.02529 * 0 - 11.49718 #x = 0, y = -11.49718, xend = 20, yend = -10.99138
-0.02529 * 20 - 11.49718 
-summary(nh.mci)
-0.04390 * 0 - 11.58446 #x = 0, y = -11.58446, xend = 20, yend = -10.70646
-0.04390 * 20 - 11.58446 
-summary(mild.normal)
-0.11135 * 20 - 12.97115 #x = 20 , y = -10.74415, xend = 40, yend = -8.51715
-0.11135 * 40 - 12.97115 
-summary(mild.mci)
-0.22382 * 20 - 15.96149 #x = 20, y = -11.48509, xend = 40, yend = -7.00869
-0.22382 * 40 - 15.96149
-summary(moderate.normal)
-0.3563 * 40 - 21.8410 #x = 40, y = -7.589, xend = 64, yend = 0.9622
-0.3563 * 64 - 21.8410 
-summary(moderate.mci)
-0.13725 * 40 - 10.26853 #x = 40, y = -4.77853, xend = 64, yend = -1.48453
-0.13725 * 64 - 10.26853 
-
 # Plot SRT ~ PTA, cognitive category colour-coded (blue = normal, red = MCI)
+# Coordinates for geom_segments were manually calculated using slopes and intercepts from above models
 ggplot(data2, aes(x = jitter(PTA.better), y = SRT, color = Cog.cat)) +
   geom_point(size = 3) + 
   scale_colour_manual(labels = c("Normal", "MCI"), name="Cognitive Category", values=c("dodgerblue1", "orangered1")) +
@@ -265,59 +217,30 @@ ggplot(data2, aes(x = jitter(PTA.better), y = SRT, color = Cog.cat)) +
 summary(lm(SRT ~ PTA.better * Cog.cat.num, subset(data2, PTA.group == "Mild")))
 ```
  
-#### Figure 4. Residuals from SRT-PTA, versus MoCA
+#### Figure 4. SRT-PTA residuals calculated from overall regression line
+  
+The SRT-PTA residuals are calculated from the regression line across all PTA Groups.      
+There is no significant relationship between MoCA and residuals for the Normal and Mild groups. 
+There is a significant relationship for the Moderate group; r = -0.39, p = 0.046. 
+  
 ```{r, echo=FALSE}
 
-# Regression: SRT ~ PTA
+# Overall regression SRT~PTA
 m1 <- lm(SRT ~ PTA.better, data2)
 
-# Extract residuals for three PTA Groups
+# Extract residuals for three PTA Groups, from same regression line
 resdata <- data.frame(residuals = m1$residuals)
 resdata$PTA.group <- data2$PTA.group
 resdata$PTA.better <- data2$PTA.better
 resdata$MoCA.total <- data2$MoCA.total
 
-# Plot residuals ~ MoCA
-ggplot(data2, aes(y = m1$residuals, x = jitter(MoCA.total), colour = PTA.group, shape = PTA.group)) + 
-  geom_point(size = 3) +
-  scale_shape_manual(values = c(20, 2, 17)) + 
-  scale_color_manual(values = c("seagreen3", "dodgerblue", "red1")) +
-  scale_x_continuous(name = "MoCA total", limits = c(17.75, 30.25), breaks = seq(18, 30, 2)) +
-  scale_y_continuous(name = "Predicted SRT - Actual SRT", limits=c(-4,8), breaks=seq(-4, 8, 2)) +
-  annotate(geom = "text", x=20, y=4, label = "Poorer SRT than expected", size = 3) +
-  annotate(geom = "text", x=20, y=-1.75, label = "Better SRT than expected", size = 3) +
-  geom_hline(yintercept = 0, lty = "dashed", color = "black") + 
-  theme_bw() + 
-  theme(axis.title = element_text(size = 20), 
-    axis.text = element_text(colour = "black", size = 16), 
-    text = element_text(size = 16)) + 
-  theme(legend.position = c(0.9, 0.85), 
-        legend.title = element_text(size = 16), 
-        legend.text = element_text(size = 12), 
-        legend.margin = margin(0.25, 0.25, 0.5, 0.25, "cm"), 
-        legend.box.background = element_rect(color = "grey50", size = 0.5)) +
-  theme(plot.margin = unit(c(0.5, 0.5, 0.25, 0.25), "cm"))
-
-#Warning: "Removed 6 rows containing missing values (geom_point)" ...but no NA values?
-#Note!!! Jittering x-values meant any values over the strict x-limits were not plotted
-
-```
-
-#### Figure 4b. Residuals from SRT-PTA versus MocA, with regression lines for PTA Groups
-  
-**There is no significant relationship between MoCA and residuals for the Normal and Mild groups.**  
-**There is a significant relationship for the Moderate group; r = -0.39, p = 0.046.**
-  
-```{r, echo=FALSE}
-
-# Regressions for three PTA Groups
+# Residuals~MoCA regression lines for three individual PTA Groups, for plotting
 m.normal <- lm(residuals ~ MoCA.total, resdata[resdata$PTA.group == "Normal", ])
 m.mild <- lm(residuals ~ MoCA.total, resdata[resdata$PTA.group == "Mild", ])
 m.moderate <- lm(residuals ~ MoCA.total, resdata[resdata$PTA.group == "Moderate", ])
-```
- 
-```{r, echo=FALSE}
 
+# Plot scatter with y-axis=residuals and x-axis=MoCA; then plot regression lines on top 
+# Coordinates for geom_segments were manually calculated using slopes and intercepts from above models
 ggplot(data2, aes(y = m1$residuals, x = jitter(MoCA.total), colour = PTA.group, shape = PTA.group)) + 
   geom_point(size = 3) +
   scale_shape_manual(values = c(20, 2, 17)) + 
@@ -327,8 +250,8 @@ ggplot(data2, aes(y = m1$residuals, x = jitter(MoCA.total), colour = PTA.group, 
   annotate(geom = "text", x=20, y=4, label = "Poorer SRT than expected", size = 3) +
   annotate(geom = "text", x=20, y=-1.75, label = "Better SRT than expected", size = 3) +
   geom_hline(yintercept = 0, lty = "dashed", color = "black") + 
-  geom_segment(x = 18.9, xend = 30.1, y = 0.4020779, yend = 0.1468081, colour="seagreen3", size=0.5) + 
-  geom_segment(x = 17.8, xend = 30.2, y = -0.5230071, yend = -0.8522137, colour="dodgerblue", size=0.5) + 
+  geom_segment(x = 18.9, xend = 30.1, y = 0.4020779, yend = 0.1468081, colour="seagreen3", size=1) + 
+  geom_segment(x = 17.8, xend = 30.2, y = -0.5230071, yend = -0.8522137, colour="dodgerblue", size=1) + 
   geom_segment(x = 19.5, xend = 29.5, y = 3.494582, yend = -0.2009475, colour = "red2", size = 1) + 
   theme_bw() + 
   theme(axis.title = element_text(size = 20), 
@@ -349,4 +272,57 @@ with(subset(resdata, PTA.group == "Normal"), cor.test(residuals, MoCA.total))
 with(subset(resdata, PTA.group == "Mild"), cor.test(residuals, MoCA.total))
 with(subset(resdata, PTA.group == "Moderate"), cor.test(residuals, MoCA.total)) 
 ```
+  
+#### Figure 5. Residuals calculated from group-specific regression line
+  
+```{r, echo=FALSE}
 
+# SRT~PTA regressions for each PTA Group
+m.normal <- lm(SRT ~ MoCA.total, data2[data2$PTA.group == "Normal", ])
+m.mild <- lm(SRT ~ MoCA.total, data2[data2$PTA.group == "Mild", ])
+m.moderate <- lm(SRT ~ MoCA.total, data2[data2$PTA.group == "Moderate", ])
+
+# Extract residuals for three PTA Groups, from group-specific regression line
+res.normal <- data.frame(residuals = m.normal$residuals, 
+                         PTA.group = rep("Normal", 132), 
+                         MoCA.total = data2[data2$PTA.group == "Normal", ]$MoCA.total)
+res.mild <- data.frame(residuals = m.mild$residuals, 
+                       PTA.group = rep("Mild", 103), 
+                       MoCA.total = data2[data2$PTA.group == "Mild", ]$MoCA.total)  
+res.moderate <- data.frame(residuals = m.moderate$residuals, 
+                           PTA.group = rep("Moderate", 26),
+                           MoCA.total = data2[data2$PTA.group == "Moderate", ]$MoCA.total)
+
+resdata <- data.frame(rbind(res.normal, res.mild, res.moderate))
+resdata$PTA.group <- factor(resdata$PTA.group, levels = c("Normal", "Mild", "Moderate"))
+  
+# Residuals~MoCA regressions for three individual PTA Groups, for plotting
+m.normal <- lm(residuals ~ MoCA.total, resdata[resdata$PTA.group == "Normal", ])
+m.mild <- lm(residuals ~ MoCA.total, resdata[resdata$PTA.group == "Mild", ])
+m.moderate <- lm(residuals ~ MoCA.total, resdata[resdata$PTA.group == "Moderate", ])
+
+# Plot scatter with y-axis=residuals and x-axis=MoCA; then plot regression lines on top 
+# Coordinates for geom_segments were manually calculated using slopes and intercepts from above models
+ggplot(resdata, aes(x = jitter(MoCA.total), y = residuals, colour = PTA.group, shape = PTA.group)) + 
+  geom_point(size = 3) +
+  scale_shape_manual(values = c(20, 2, 17)) + 
+  scale_color_manual(values = c("seagreen3", "dodgerblue", "red1")) +
+  scale_x_continuous(name = "MoCA total", limits = c(17.75, 30.25), breaks = seq(18, 30, 2)) +
+  scale_y_continuous(name = "Predicted SRT - Actual SRT", limits=c(-6, 6), breaks=seq(-6, 6, 2)) +
+  annotate(geom = "text", x=20, y=4, label = "Poorer SRT than expected", size = 3) +
+  annotate(geom = "text", x=20, y=-4, label = "Better SRT than expected", size = 3) +
+  geom_segment(x = 17.8, xend = 30.1, y = 8.16912e-17, yend = 5.59104e-17, colour="dodgerblue", size=1) + 
+  geom_segment(x = 19, xend = 30, y = -1.5246e-16, yend = -2.36313e-16, colour="seagreen3", size=1) + 
+  geom_segment(x = 19.8, xend = 29.2, y = -2.3578e-16, yend = 7.4088e-16, colour = "red2", size = 1) + 
+  theme_bw() + 
+  theme(axis.title = element_text(size = 20), 
+    axis.text = element_text(colour = "black", size = 16), 
+    text = element_text(size = 16)) + 
+  theme(legend.position = c(0.9, 0.85), 
+        legend.title = element_text(size = 14), 
+        legend.text = element_text(size = 10), 
+        legend.margin = margin(0.1, 0.1, 0.1, 0.1, "cm"), 
+        legend.box.background = element_rect(color = "grey50", size = 0.25)) +
+  theme(plot.margin = unit(c(0.5, 0.5, 0.25, 0.25), "cm"))
+
+```
