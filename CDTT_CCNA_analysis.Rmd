@@ -265,18 +265,24 @@ ggplot(data2, aes(x = jitter(PTA.better), y = SRT, color = Cog.cat)) +
 summary(lm(SRT ~ PTA.better * Cog.cat.num, subset(data2, PTA.group == "Mild")))
 ```
  
-### Residuals from SRT-PTA, versus MoCA
+#### Figure 4. Residuals from SRT-PTA, versus MoCA
 ```{r, echo=FALSE}
 
 # Regression: SRT ~ PTA
 m1 <- lm(SRT ~ PTA.better, data2)
+
+# Extract residuals for three PTA Groups
+resdata <- data.frame(residuals = m1$residuals)
+resdata$PTA.group <- data2$PTA.group
+resdata$PTA.better <- data2$PTA.better
+resdata$MoCA.total <- data2$MoCA.total
 
 # Plot residuals ~ MoCA
 ggplot(data2, aes(y = m1$residuals, x = jitter(MoCA.total), colour = PTA.group, shape = PTA.group)) + 
   geom_point(size = 3) +
   scale_shape_manual(values = c(20, 2, 17)) + 
   scale_color_manual(values = c("seagreen3", "dodgerblue", "red1")) +
-  scale_x_continuous(name = "MoCA total", limits = c(18, 30), breaks = seq(18, 30, 2)) +
+  scale_x_continuous(name = "MoCA total", limits = c(17.75, 30.25), breaks = seq(18, 30, 2)) +
   scale_y_continuous(name = "Predicted SRT - Actual SRT", limits=c(-4,8), breaks=seq(-4, 8, 2)) +
   annotate(geom = "text", x=20, y=4, label = "Poorer SRT than expected", size = 3) +
   annotate(geom = "text", x=20, y=-1.75, label = "Better SRT than expected", size = 3) +
@@ -292,6 +298,55 @@ ggplot(data2, aes(y = m1$residuals, x = jitter(MoCA.total), colour = PTA.group, 
         legend.box.background = element_rect(color = "grey50", size = 0.5)) +
   theme(plot.margin = unit(c(0.5, 0.5, 0.25, 0.25), "cm"))
 
+#Warning: "Removed 6 rows containing missing values (geom_point)" ...but no NA values?
+#Note!!! Jittering x-values meant any values over the strict x-limits were not plotted
 
+```
+
+#### Figure 4b. Residuals from SRT-PTA versus MocA, with regression lines for PTA Groups
+  
+**There is no significant relationship between MoCA and residuals for the Normal and Mild groups.**  
+**There is a significant relationship for the Moderate group; r = -0.39, p = 0.046.**
+  
+```{r, echo=FALSE}
+
+# Regressions for three PTA Groups
+m.normal <- lm(residuals ~ MoCA.total, resdata[resdata$PTA.group == "Normal", ])
+m.mild <- lm(residuals ~ MoCA.total, resdata[resdata$PTA.group == "Mild", ])
+m.moderate <- lm(residuals ~ MoCA.total, resdata[resdata$PTA.group == "Moderate", ])
+```
+ 
+```{r, echo=FALSE}
+
+ggplot(data2, aes(y = m1$residuals, x = jitter(MoCA.total), colour = PTA.group, shape = PTA.group)) + 
+  geom_point(size = 3) +
+  scale_shape_manual(values = c(20, 2, 17)) + 
+  scale_color_manual(values = c("seagreen3", "dodgerblue", "red1")) +
+  scale_x_continuous(name = "MoCA total", limits = c(17.75, 30.25), breaks = seq(18, 30, 2)) +
+  scale_y_continuous(name = "Predicted SRT - Actual SRT", limits=c(-4,8), breaks=seq(-4, 8, 2)) +
+  annotate(geom = "text", x=20, y=4, label = "Poorer SRT than expected", size = 3) +
+  annotate(geom = "text", x=20, y=-1.75, label = "Better SRT than expected", size = 3) +
+  geom_hline(yintercept = 0, lty = "dashed", color = "black") + 
+  geom_segment(x = 18.9, xend = 30.1, y = 0.4020779, yend = 0.1468081, colour="seagreen3", size=0.5) + 
+  geom_segment(x = 17.8, xend = 30.2, y = -0.5230071, yend = -0.8522137, colour="dodgerblue", size=0.5) + 
+  geom_segment(x = 19.5, xend = 29.5, y = 3.494582, yend = -0.2009475, colour = "red2", size = 1) + 
+  theme_bw() + 
+  theme(axis.title = element_text(size = 20), 
+    axis.text = element_text(colour = "black", size = 16), 
+    text = element_text(size = 16)) + 
+  theme(legend.position = c(0.9, 0.85), 
+        legend.title = element_text(size = 16), 
+        legend.text = element_text(size = 12), 
+        legend.margin = margin(0.25, 0.25, 0.5, 0.25, "cm"), 
+        legend.box.background = element_rect(color = "grey50", size = 0.5)) +
+  theme(plot.margin = unit(c(0.5, 0.5, 0.25, 0.25), "cm"))
+
+```
+
+```{r, echo=TRUE}
+
+with(subset(resdata, PTA.group == "Normal"), cor.test(residuals, MoCA.total))
+with(subset(resdata, PTA.group == "Mild"), cor.test(residuals, MoCA.total))
+with(subset(resdata, PTA.group == "Moderate"), cor.test(residuals, MoCA.total)) 
 ```
 
