@@ -1,0 +1,173 @@
+---
+title: "CDTT-CCNA data analysis (segmented regression)"
+output: html_document
+---
+
+**Note: Data exclusion**
+  
+1. Original dataset had n=264. 
+2. Dropped single outlier (PTA < 19 & SRT > 2).
+3. Dropped two participants with missing SRT data.
+4. All plots and analyses use n=261 now.
+  
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+
+# Read packages
+library(segmented)
+
+# Read data
+all_data <- read.csv('ccna.full.05.27.2020.csv', header=TRUE, blank.lines.skip = TRUE,
+                 stringsAsFactors=FALSE, na.strings=c("NA", "<NA>", "#NULL!", "", " "))
+
+# Exclude some rows and select only a small subset of variables
+data <- subset(all_data, 
+               Faisal..April..Allison == 1, 
+               select=c(Age.ab, 
+                        Sex.M.F.Other, 
+                        Cognitive.category, 
+                        MoCA.Total...30., 
+                        L250:R8000, 
+                        T1.corrected.SRT, 
+                        ETDRS.Acuity.log.score....A...C., 
+                        MNRead.Vision.Test.Acuity.1.4.A.0.1.B.0.01, 
+                        MARS.A...C...Sensitivity))
+
+# Rename some variables
+colnames(data)[colnames(data) == "Age.ab"] <- "Age"
+colnames(data)[colnames(data) == "Sex.M.F.Other"] <- "Sex"
+colnames(data)[colnames(data) == "MoCA.Total...30."] <- "MoCA.total"
+colnames(data)[colnames(data) == "T1.corrected.SRT"] <- "SRT"
+colnames(data)[colnames(data) == "ETDRS.Acuity.log.score....A...C."] <- "ETDRS"
+colnames(data)[colnames(data) == "MNRead.Vision.Test.Acuity.1.4.A.0.1.B.0.01"] <- "MNRead"
+colnames(data)[colnames(data) == "MARS.A...C...Sensitivity"] <- "MARS"
+
+# Recode four cognitive categories to two
+data$Cog.cat[data$Cognitive.category == "MCI-NoSubjective"] <- "MCI"
+data$Cog.cat[data$Cognitive.category == "MCI"] <- "MCI"
+data$Cog.cat[data$Cognitive.category == "Normal"] <- "Normal"
+data$Cog.cat[data$Cognitive.category == "SCI"] <- "Normal"
+# Order factor levels
+data$Cog.cat <- factor(data$Cog.cat, levels = c("Normal", "MCI"))
+
+# Recode two cognitive categories to numeric
+data$Cog.cat.num[data$Cog.cat == "Normal"] <- 0
+data$Cog.cat.num[data$Cog.cat == "MCI"] <- 1
+
+# Recode MoCA scores above and below normal cutoff of 26
+data$MoCA.cat[data$MoCA.total >= 26] <- "≥26"
+data$MoCA.cat[data$MoCA.total < 26] <- "<26"
+# Order factor levels
+data$MoCA.cat <- factor(data$MoCA.cat, levels = c("≥26", "<26"))
+
+# Recode two MoCA categories to numeric
+data$MoCA.cat.num[data$MoCA.total >= 26] <- 0
+data$MoCA.cat.num[data$MoCA.total < 26] <- 1
+
+# Calculate 4f-PTA better ear
+data$LPTA <- (data$L500 + data$L1000 + data$L2000 + data$L4000) / 4
+data$RPTA <- (data$R500 + data$R1000 + data$R2000 + data$R4000) / 4
+data$PTA.better <- pmin(data$LPTA, data$RPTA)
+
+# Classify participants according to PTA
+data$PTA.group[data$PTA.better <= 20] <- "Normal"
+data$PTA.group[data$PTA.better > 20 & data$PTA.better < 40] <- "Mild"
+data$PTA.group[data$PTA.better >= 40] <- "Moderate"
+# Order factor levels
+data$PTA.group <- factor(data$PTA.group, levels = c("Normal", "Mild", "Moderate"))
+
+# Drop three data rows
+data2 <- data[-which(data$PTA.better == 18.75 & data$SRT == 2.476), ]
+data2 <- data2[is.na(data2$SRT)==FALSE, ]
+
+rm(list = c('all_data', 'data'))
+
+```
+
+### Breakpoint analysis (assuming one breakpoint)
+  
+```{r}
+
+# The original regression of SRT-PTA 
+m1 <- lm(SRT ~ PTA.better, data = data2)
+ 
+# I put in an estimated breakpoint of 25 dB HL for the algorithm to use as a starting value
+s1 <- segmented(m1, seg.Z = ~PTA.better, psi = 25)
+
+# Results below show a flat first slope (b = 0.049) and a steeper second slope (b = 0.23)
+# Estimated breakpoint at 27.60323 dB HL
+summary(s1)
+ 
+```
+
+```{r}
+
+# Test that there is some change in the slope of linear model; there could be multiple breakpoints
+# Ask to test the data using 'k' equally spaced points, or 'k-1' segments
+s1.dtest <- davies.test(m1, seg.Z = ~PTA.better, k = 7)
+s1.dtest
+# Change in slope is somewhere in the third segment?
+s1.dtest$process
+
+# Alternative test: Test that there is exactly one breakpoint
+# Documentation says this test is more powerful than the Davies test above when there is only one breakpoint expected; lower power than Davies test when multiple breakpoints exist (e.g. sinusoidal)
+s1.ptest <- pscore.test(m1, seg.Z = ~PTA.better, k = 7, n.break = 1)
+# Yes, there is one breakpoint
+s1.ptest
+
+```
+  
+```{r, echo=FALSE}
+
+# Predicted fit using segmented model
+s1.pred <- predict(s1, newdata = data2)
+
+# Original datapoints
+plot(data2$PTA.better, data2$SRT, 
+     xlim=c(-5, 65), ylim=c(-15, 5), 
+     xlab = "PTA better ear (dB HL)", ylab = "SRT (dB)", main="One breakpoint")
+# Add fitted line to scatterplot 
+# I ordered the predicted SRT values and PTA values to plot a "fitted" line
+par(new=TRUE)
+plot(data2$PTA.better[order(data2$PTA.better)], s1.pred[order(s1.pred)], 
+     xlim=c(-5, 65), ylim=c(-15, 5), ann=FALSE, xaxt='n', yaxt='n', type='l', col = 'red', lwd=2)
+
+```
+  
+### Breakpoint analysis (assuming two breakpoints)
+  
+```{r}
+
+# Same original regression
+m1 <- lm(SRT ~ PTA.better, data = data2)
+
+# I told the algorithm to look for two breakpoints
+s2 <- segmented(m1, seg.Z = ~PTA.better, npsi = 2)
+
+# If I wanted two breakpoints, the algorithm thinks they would be at 6.266 and 27.837.
+summary(s2) 
+
+```
+  
+**There's hardly any change in the slope before 27 dB HL. **
+ 
+```{r, echo=FALSE}
+
+# Predicted fit using segmented model
+s2.pred <- predict(s2, newdata = data2)
+
+# Original datapoints
+plot(data2$PTA.better, data2$SRT, 
+     xlim=c(-5, 65), ylim=c(-15, 5), 
+     xlab = "PTA better ear (dB HL)", ylab = "SRT (dB)", main="Two breakpoints")
+# Add fitted line to scatterplot 
+par(new=TRUE)
+plot(data2$PTA.better[order(data2$PTA.better)], s2.pred[order(s2.pred)], 
+     xlim=c(-5, 65), ylim=c(-15, 5), ann=FALSE, xaxt='n', yaxt='n', type='l', col = 'red', lwd=2)
+
+```
+
+### Conclusion
+  
+There is just one breakpoint, at about 27.7 dB HL.
+  
+
