@@ -9,8 +9,12 @@ The Rmd file "...merging" contains the code for merging the three datasets, base
 
 The Rmd file "...segmented_regression" contains code for a segmented regression analysis for SRT and PTA.
 
+The Rmd file "...moderation" contains code for an analysis of the PTA-SRT relationship with MoCA as a moderating factor.
+
 #### Results
 
 The segmented regression analysis can be viewed here: [https://huiwen-goy.github.io/CDTT-CCNA/CDTT_CCNA_segmented_regression.html](https://huiwen-goy.github.io/CDTT-CCNA/CDTT_CCNA_segmented_regression.html)
+
+The moderation analysis can be viewed here: [https://huiwen-goy.github.io/CDTT-CCNA/CDTT_CCNA_moderation.html](https://huiwen-goy.github.io/CDTT-CCNA/CDTT_CCNA_moderation.html)
 
 The original regression and plots can be viewed here: [https://huiwen-goy.github.io/CDTT-CCNA/CDTT_CCNA_simple_regression.html](https://huiwen-goy.github.io/CDTT-CCNA/CDTT_CCNA_simple_regression.html)
