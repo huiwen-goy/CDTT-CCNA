@@ -1,0 +1,196 @@
+---
+title: "CDTT-CCNA data analysis (moderation analysis)"
+output: html_document
+---
+ 
+Note about excluded participants: 
+ 
+1. Original dataset had n=264. 
+2. Dropped single outlier (PTA < 19 & SRT > 2).
+3. Dropped two participants with missing SRT data.
+4. All plots and analyses use n=261 now.
+   
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+
+# Read packages
+library(ggplot2)
+
+# Read data
+all_data <- read.csv('ccna.full.05.27.2020.csv', header=TRUE, blank.lines.skip = TRUE,
+                 stringsAsFactors=FALSE, na.strings=c("NA", "<NA>", "#NULL!", "", " "))
+
+# Exclude some rows and select only a small subset of variables
+data <- subset(all_data, 
+               Faisal..April..Allison == 1, 
+               select=c(Age.ab, 
+                        Sex.M.F.Other, 
+                        Cognitive.category, 
+                        MoCA.Total...30., 
+                        L250:R8000, 
+                        T1.corrected.SRT, 
+                        ETDRS.Acuity.log.score....A...C., 
+                        MNRead.Vision.Test.Acuity.1.4.A.0.1.B.0.01, 
+                        MARS.A...C...Sensitivity))
+
+# Rename some variables
+colnames(data)[colnames(data) == "Age.ab"] <- "Age"
+colnames(data)[colnames(data) == "Sex.M.F.Other"] <- "Sex"
+colnames(data)[colnames(data) == "MoCA.Total...30."] <- "MoCA.total"
+colnames(data)[colnames(data) == "T1.corrected.SRT"] <- "SRT"
+colnames(data)[colnames(data) == "ETDRS.Acuity.log.score....A...C."] <- "ETDRS"
+colnames(data)[colnames(data) == "MNRead.Vision.Test.Acuity.1.4.A.0.1.B.0.01"] <- "MNRead"
+colnames(data)[colnames(data) == "MARS.A...C...Sensitivity"] <- "MARS"
+
+# Recode four cognitive categories to two
+data$Cog.cat[data$Cognitive.category == "MCI-NoSubjective"] <- "MCI"
+data$Cog.cat[data$Cognitive.category == "MCI"] <- "MCI"
+data$Cog.cat[data$Cognitive.category == "Normal"] <- "Normal"
+data$Cog.cat[data$Cognitive.category == "SCI"] <- "Normal"
+# Order factor levels
+data$Cog.cat <- factor(data$Cog.cat, levels = c("Normal", "MCI"))
+
+# Recode two cognitive categories to numeric
+data$Cog.cat.num[data$Cog.cat == "Normal"] <- 0
+data$Cog.cat.num[data$Cog.cat == "MCI"] <- 1
+
+# Recode MoCA scores above and below normal cutoff of 26
+data$MoCA.cat[data$MoCA.total >= 26] <- "≥26"
+data$MoCA.cat[data$MoCA.total < 26] <- "<26"
+# Order factor levels
+data$MoCA.cat <- factor(data$MoCA.cat, levels = c("≥26", "<26"))
+
+# Recode two MoCA categories to numeric
+data$MoCA.cat.num[data$MoCA.total >= 26] <- 0
+data$MoCA.cat.num[data$MoCA.total < 26] <- 1
+
+# Calculate 4f-PTA better ear
+data$LPTA <- (data$L500 + data$L1000 + data$L2000 + data$L4000) / 4
+data$RPTA <- (data$R500 + data$R1000 + data$R2000 + data$R4000) / 4
+data$PTA.better <- pmin(data$LPTA, data$RPTA)
+
+# Classify participants according to PTA
+data$PTA.group[data$PTA.better <= 20] <- "Normal"
+data$PTA.group[data$PTA.better > 20 & data$PTA.better < 40] <- "Mild"
+data$PTA.group[data$PTA.better >= 40] <- "Moderate"
+# Order factor levels
+data$PTA.group <- factor(data$PTA.group, levels = c("Normal", "Mild", "Moderate"))
+
+# Drop three data rows
+data2 <- data[-which(data$PTA.better == 18.75 & data$SRT == 2.476), ]
+data2 <- data2[is.na(data2$SRT)==FALSE, ]
+
+rm(list = c('all_data', 'data'))
+
+```
+  
+### Moderation analysis (all data)
+  
+```{r, echo=FALSE}
+
+# All datapoints
+m.all <- lm(SRT ~ PTA.better*MoCA.total, data = data2)
+summary(m.all)
+```
+   
+### Moderation analysis (split data at PTA breakpoint)
+   
+Splitting the data at PTA = 27.603, from the segmented regression analysis that assumes only 1 breakpoint, there are 190 participants with PTA < 27.6 and 71 participants with PTA > 27.6. No participants are on the border of 27.6.   
+  
+```{r, echo=FALSE}
+
+lowerPTA <- subset(data2, PTA.better <= 27.603)
+higherPTA <- subset(data2, PTA.better >= 27.603)
+```
+  
+**For participants with PTA < 27.6, there is no effect of PTA, no effect of MoCA, and no interaction of PTA and MoCA.**
+  
+```{r, echo=FALSE}
+
+m.lowerPTA <- lm(SRT ~ PTA.better*MoCA.total, data = lowerPTA)
+summary(m.lowerPTA)
+```
+  
+**For participants with PTA > 27.6, there is no effect of PTA (!), no effect of MoCA, and no interaction of PTA and MoCA.**
+  
+```{r, echo=FALSE}
+
+m.higherPTA <- lm(SRT ~ PTA.better*MoCA.total, data = higherPTA)
+summary(m.higherPTA)
+```
+
+**Delving into why the effect of PTA is absent, having two main terms and no interaction term makes the PTA effect reappear. So adding an interaction term "takes away" some of the variance from the PTA term.** 
+  
+```{r, echo=FALSE}
+
+m2.higherPTA <- lm(SRT ~ PTA.better + MoCA.total, data = higherPTA)
+summary(m2.higherPTA)
+```
+     
+**The plot below shows only participants with PTA ≥ 27.6. The colour gradient is set so that white is MoCA=25; blue is greater than 25 and red is less than 25. There isn't a clear pattern to the distribution of red and blue dots, which agrees with the absence of an interaction.**
+ 
+```{r, echo=FALSE}
+
+set.seed(1001)
+ggplot(higherPTA, aes(x = jitter(PTA.better), y = SRT, color = MoCA.total)) +
+  geom_point(size = 3) + 
+  scale_colour_gradient2(low = "red", mid = "white", high = "blue", midpoint = 25, name = "MoCA total") +
+  scale_x_continuous(name = "PTA better ear (dB HL)", limits = c(25,65), expand = c(0,0), breaks = seq(25,65,5)) + 
+  scale_y_continuous(name = "SRT (dB SNR)", limits = c(-14,4), expand = c(0,0), breaks = seq(-14,4,2)) + 
+  theme(axis.title = element_text(size = 20), 
+        axis.text = element_text(colour = "black", size = 16), 
+        text = element_text(size = 16)) + 
+  theme(legend.position = c(0.15, 0.75), 
+        legend.title = element_text(size = 16), 
+        legend.text = element_text(size = 12), 
+        legend.margin = margin(0.25, 0.25, 0.5, 0.25, "cm")) + 
+  theme(plot.margin = unit(c(0.5, 0.5, 0.25, 0.25), "cm")) + 
+  theme(panel.background = element_rect(fill = 'black', colour = 'black'), 
+        panel.grid = element_line(colour = '#999999'))
+```
+   
+**Simplifying the MoCA variable by classifying participants into just two groups, MoCA ≥ 26 and MoCA < 26, the model again shows that MoCA category (≥26 or <26) does not moderate the PTA-SRT relationship, but at least the expected effect of PTA is present.**
+  
+```{r, echo=FALSE}
+
+# Moderation analysis for PTA ≥ 27.603, with MoCA as two categories
+mcat.higherPTA <- lm(SRT ~ PTA.better*MoCA.cat.num, data = higherPTA)
+summary(mcat.higherPTA)
+```
+  
+```{r, echo=FALSE}
+
+# Calculate regression line for each MoCA category
+m.higherM <- lm(SRT ~ PTA.better, data = subset(higherPTA, MoCA.cat == "≥26"))
+m.lowerM <- lm(SRT ~ PTA.better, data = subset(higherPTA, MoCA.cat == "<26"))
+
+# Plot just PTA ≥ 27.6, colour-coded by MoCA category
+set.seed(1001)
+ggplot(higherPTA, aes(x = jitter(PTA.better), y = SRT, color = MoCA.cat)) +
+  geom_point(size = 3) + 
+  scale_colour_manual(labels = c("26+", "<26"), name="MoCA Category", values=c("dodgerblue1", "orangered1")) +
+  scale_x_continuous(name = "PTA better ear (dB HL)", limits = c(25,65), expand = c(0,0), breaks = seq(25,65,5)) + 
+  scale_y_continuous(name = "SRT (dB SNR)", limits = c(-14,4), expand = c(0,0), breaks = seq(-14,4,2)) + 
+geom_abline(slope = m.higherM$coefficients[2], intercept = m.higherM$coefficients[1], 
+            colour = "dodgerblue1") +   
+geom_abline(slope = m.lowerM$coefficients[2], intercept = m.lowerM$coefficients[1], 
+            colour = "orangered1") +  
+  theme(axis.title = element_text(size = 20), 
+        axis.text = element_text(colour = "black", size = 16), 
+        text = element_text(size = 16)) + 
+  theme(legend.position = c(0.15, 0.75), 
+        legend.title = element_text(size = 16), 
+        legend.text = element_text(size = 12), 
+        legend.margin = margin(0.25, 0.25, 0.5, 0.25, "cm")) + 
+  theme(plot.margin = unit(c(0.5, 0.5, 0.25, 0.25), "cm")) + 
+  theme(panel.background = element_rect(fill = 'black', colour = 'black'), 
+        panel.grid = element_line(colour = '#999999'))
+```
+  
+### Conclusion
+  
+**Limiting the moderation analysis to participants with PTA ≥ 27.6 (based on the regression analysis with one breakpoint), there is no moderating effect of MoCA score or MoCA category on the PTA-SRT relationship.**
+   
+**In past analyses when saw a moderating effect of MoCA, it only appeared when we looked at participants with 20 < PTA < 40 (n=103). Here, when we looked at PTA ≥ 27.6 (n=71), there were only 45 participants in common between the two analyses and the MoCA effect disappeared.**
+  
+**There is a main effect of PTA on SRT, but this is only seen when MoCA is a continuous variable and no interaction term is included, or when MoCA is a binary variable and an interaction term is included.** 
+  
